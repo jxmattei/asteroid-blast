@@ -10,7 +10,23 @@ document.body.appendChild(renderer.domElement);
 
 // Create rocket
 const textureLoader = new THREE.TextureLoader();
-const rocketTexture = textureLoader.load('spaceship.png');
+const rocketTexture = textureLoader.load(
+    'spaceship.png',
+    // onLoad callback
+    function (texture) {
+        console.log('Spaceship texture loaded successfully');
+    },
+    // onProgress callback
+    undefined,
+    // onError callback
+    function (err) {
+        console.error('Error loading spaceship texture:', err);
+        // Fallback to red geometry if image fails to load
+        rocket.material.color.setHex(0xff0000);
+        rocket.material.map = null;
+        rocket.material.needsUpdate = true;
+    }
+);
 const rocketGeometry = new THREE.PlaneGeometry(3, 3); // Larger size for better visibility
 const rocketMaterial = new THREE.MeshBasicMaterial({
     map: rocketTexture,
