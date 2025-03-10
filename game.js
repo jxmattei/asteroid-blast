@@ -9,10 +9,17 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // Create rocket
-const rocketGeometry = new THREE.ConeGeometry(0.5, 2, 32);
-const rocketMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+const textureLoader = new THREE.TextureLoader();
+const rocketTexture = textureLoader.load('spaceship.png');
+const rocketGeometry = new THREE.PlaneGeometry(3, 3); // Larger size for better visibility
+const rocketMaterial = new THREE.MeshBasicMaterial({
+    map: rocketTexture,
+    transparent: true,
+    side: THREE.DoubleSide
+});
 const rocket = new THREE.Mesh(rocketGeometry, rocketMaterial);
-rocket.position.y = -15;
+rocket.position.set(0, -15, 0);
+rocket.rotation.z = Math.PI; // Rotate to point upward
 scene.add(rocket);
 
 // Game state
@@ -327,8 +334,7 @@ function resetGame() {
     
     // Reset rocket
     rocket.position.set(0, -15, 0);
-    rocket.material.color.setHex(0xff0000);
-    rocket.material.emissiveIntensity = 0;
+    rocket.material.opacity = 1;
     
     // Reset moon
     moon.visible = false;
@@ -537,7 +543,7 @@ function animate() {
                     case 'shield':
                         hasShield = true;
                         shieldTimer = 300; // 5 seconds at 60fps
-                        rocket.material.color.setHex(0x0000ff);
+                        rocket.material.opacity = 0.7; // Make semi-transparent to show shield effect
                         break;
                     case 'speed':
                         hasSpeedBoost = true;
