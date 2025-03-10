@@ -22,7 +22,7 @@ const rocketTexture = textureLoader.load(
     function (err) {
         console.error('Error loading spaceship texture:', err);
         // Fallback to red geometry if image fails to load
-        rocket.material.color.setHex(0xff0000);
+        // rocket.material.color.setHex(0xff0000);
         rocket.material.map = null;
         rocket.material.needsUpdate = true;
     }
