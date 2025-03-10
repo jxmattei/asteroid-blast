@@ -35,7 +35,7 @@ const rocketMaterial = new THREE.MeshBasicMaterial({
 });
 const rocket = new THREE.Mesh(rocketGeometry, rocketMaterial);
 rocket.position.set(0, -15, 0);
-rocket.rotation.z = Math.PI; // Rotate to point upward
+rocket.rotation.z = 0; // Remove the PI rotation to face the other way
 scene.add(rocket);
 
 // Game state
