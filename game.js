@@ -38,6 +38,13 @@ let shieldTimer = 0;
 let speedBoostTimer = 0;
 let multiplierTimer = 0;
 
+// Touch controls state
+let touchStartX = 0;
+let touchStartY = 0;
+let targetX = 0;
+let targetY = -15;
+let isDragging = false;
+
 // Create stars background
 const starsGeometry = new THREE.BufferGeometry();
 const starsMaterial = new THREE.PointsMaterial({
@@ -210,47 +217,64 @@ window.addEventListener('keyup', (e) => {
     }
 });
 
-// Touch event handlers
+// Initialize touch controls
 function initTouchControls() {
-    // Shoot button handlers (both touch and mouse)
+    // Touch movement on the canvas
+    renderer.domElement.addEventListener('touchstart', (e) => {
+        // Ignore if touching the shoot button
+        if (e.target === shootButton) return;
+        
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        isDragging = true;
+        
+        // Convert touch position to game coordinates
+        const rect = renderer.domElement.getBoundingClientRect();
+        targetX = ((touch.clientX - rect.left) / rect.width) * 30 - 15;
+        targetY = -((touch.clientY - rect.top) / rect.height) * 30 + 15;
+        
+        e.preventDefault();
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.target === shootButton) return;
+        
+        const touch = e.touches[0];
+        const rect = renderer.domElement.getBoundingClientRect();
+        
+        // Convert touch position to game coordinates
+        targetX = ((touch.clientX - rect.left) / rect.width) * 30 - 15;
+        targetY = -((touch.clientY - rect.top) / rect.height) * 30 + 15;
+        
+        // Clamp target positions
+        targetX = Math.max(-15, Math.min(15, targetX));
+        targetY = Math.max(-15, Math.min(25, targetY));
+        
+        e.preventDefault();
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchend', () => {
+        isDragging = false;
+    }, { passive: true });
+
+    // Prevent default touch behavior to avoid scrolling
+    document.addEventListener('touchmove', (e) => {
+        if (e.target === renderer.domElement || e.target === shootButton) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Initialize shoot button
     shootButton.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        e.stopPropagation();
         if (canShoot) {
             createLaser();
             canShoot = false;
         }
     }, { passive: false });
-
-    shootButton.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (canShoot) {
-            createLaser();
-            canShoot = false;
-        }
-    });
-
-    // Canvas touch controls
-    renderer.domElement.addEventListener('touchstart', (e) => {
-        if (e.target === shootButton) return;
-        const touch = e.touches[0];
-        const rect = renderer.domElement.getBoundingClientRect();
-        const targetX = ((touch.clientX - rect.left) / rect.width) * 30 - 15;
-        const targetY = -((touch.clientY - rect.top) / rect.height) * 30 + 15;
-        
-        // Clamp target positions
-        const clampedX = Math.max(-15, Math.min(15, targetX));
-        const clampedY = Math.max(-15, Math.min(25, targetY));
-        
-        rocket.position.x = clampedX;
-        rocket.position.y = clampedY;
-        
-        e.preventDefault();
-    }, false);
 }
 
-// Initialize touch controls after scene setup
 initTouchControls();
 
 // Collision detection
@@ -379,11 +403,18 @@ function animate() {
         });
 
         // Move rocket (smooth follow touch position)
-        const moveSpeed = hasSpeedBoost ? 0.4 : 0.2;
-        if (keys.left && rocket.position.x > -15) rocket.position.x -= moveSpeed;
-        if (keys.right && rocket.position.x < 15) rocket.position.x += moveSpeed;
-        if (keys.up && rocket.position.y < 25) rocket.position.y += moveSpeed;
-        if (keys.down && rocket.position.y > -15) rocket.position.y -= moveSpeed;
+        if (isDragging) {
+            const lerpFactor = 0.1;
+            rocket.position.x += (targetX - rocket.position.x) * lerpFactor;
+            rocket.position.y += (targetY - rocket.position.y) * lerpFactor;
+        } else {
+            // Keyboard controls
+            const moveSpeed = hasSpeedBoost ? 0.4 : 0.2;
+            if (keys.left && rocket.position.x > -15) rocket.position.x -= moveSpeed;
+            if (keys.right && rocket.position.x < 15) rocket.position.x += moveSpeed;
+            if (keys.up && rocket.position.y < 25) rocket.position.y += moveSpeed;
+            if (keys.down && rocket.position.y > -15) rocket.position.y -= moveSpeed;
+        }
 
         // Update power-up timers
         if (hasShield) {
