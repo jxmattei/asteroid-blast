@@ -160,18 +160,13 @@ function createObstacle() {
 
 // Create laser beam
 function createLaser() {
-    const geometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
-    const material = new THREE.MeshPhongMaterial({ 
-        color: 0xff0000,
-        emissive: 0xff0000,
-        emissiveIntensity: 0.5
-    });
-    const laser = new THREE.Mesh(geometry, material);
-    laser.rotation.x = Math.PI / 2; // Rotate to point upward
+    const laserGeometry = new THREE.BoxGeometry(0.1, 0.5, 0.1);
+    const laserMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const laser = new THREE.Mesh(laserGeometry, laserMaterial);
     
-    // Position at rocket's position
+    // Position laser at the front of the spaceship
     laser.position.copy(rocket.position);
-    laser.position.y += 1;
+    laser.position.y += 1.5; // Adjust to match rotated spaceship
     
     scene.add(laser);
     lasers.push({
@@ -464,13 +459,14 @@ function animate() {
         }
 
         // Update lasers
-        lasers.forEach((laser, laserIndex) => {
+        for (let i = lasers.length - 1; i >= 0; i--) {
+            const laser = lasers[i];
             laser.mesh.position.y += laser.speed;
             
             // Remove laser if it goes off screen
             if (laser.mesh.position.y > 30) {
                 scene.remove(laser.mesh);
-                lasers.splice(laserIndex, 1);
+                lasers.splice(i, 1);
                 return;
             }
             
@@ -480,7 +476,7 @@ function animate() {
                     // Remove both laser and obstacle
                     scene.remove(laser.mesh);
                     scene.remove(obstacle.mesh);
-                    lasers.splice(laserIndex, 1);
+                    lasers.splice(i, 1);
                     obstacles.splice(obstacleIndex, 1);
                     
                     // Add score
@@ -491,7 +487,7 @@ function animate() {
                     setTimeout(createObstacle, 3000);
                 }
             });
-        });
+        }
 
         // Move rocket (smooth follow touch position)
         if (isDragging) {
