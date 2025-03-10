@@ -23,7 +23,8 @@ let gameTime = 0;
 const moonAppearTime = 30; // Seconds until moon appears
 const scrollSpeed = 0.05;
 const scoreElement = document.getElementById('score');
-const gameMessage = document.getElementById('gameMessage');
+const winContainer = document.getElementById('winContainer');
+const gameOverContainer = document.getElementById('gameOverContainer');
 const shootButton = document.getElementById('shootButton');
 let obstacles = [];
 const obstacleCount = 10;
@@ -286,24 +287,29 @@ function checkCollision(obj1, obj2) {
 // Update status text
 function updateStatusText() {
     let statusText = `Score: ${score}`;
-    if (hasShield) statusText += ' | SHIELD ACTIVE';
-    if (hasSpeedBoost) statusText += ' | SPEED BOOST';
-    if (scoreMultiplier > 1) statusText += ' | 2X SCORE';
+    if (hasShield) statusText += ' | Shield Active!';
+    if (hasSpeedBoost) statusText += ' | Speed Boost!';
+    if (scoreMultiplier > 1) statusText += ` | ${scoreMultiplier}x Score!`;
     scoreElement.textContent = statusText;
 }
 
-// Show game over message
-function showGameOverMessage() {
-    gameMessage.style.display = 'block';
-    gameMessage.style.color = '#ff4444';
-    gameMessage.textContent = `GAME OVER!\nScore: ${score}`;
+// Victory effects
+function showVictoryEffects() {
+    // Show win container
+    winContainer.style.display = 'block';
+    
+    // Make the moon glow
+    moon.material.emissive.setHex(0xffff00);
+    moon.material.emissiveIntensity = 0.5;
+    
+    // Make the rocket glow
+    rocket.material.emissive.setHex(0xff0000);
+    rocket.material.emissiveIntensity = 0.5;
 }
 
-// Show victory message
-function showVictoryMessage() {
-    gameMessage.style.display = 'block';
-    gameMessage.style.color = '#44ff44';
-    gameMessage.textContent = `YOU WIN!\nScore: ${score}`;
+// Show game over screen
+function showGameOver() {
+    gameOverContainer.style.display = 'block';
 }
 
 // Reset game state
@@ -327,8 +333,9 @@ function resetGame() {
     moon.position.y = 50;
     moon.material.emissiveIntensity = 0;
     
-    // Hide message
-    gameMessage.style.display = 'none';
+    // Hide messages
+    winContainer.style.display = 'none';
+    gameOverContainer.style.display = 'none';
     
     // Clear lasers
     lasers.forEach(laser => scene.remove(laser.mesh));
@@ -354,7 +361,11 @@ function resetGame() {
     animate();
 }
 
-// Initialize restart on R key
+// Initialize restart buttons and R key
+document.querySelectorAll('.restartButton').forEach(button => {
+    button.addEventListener('click', resetGame);
+});
+
 window.addEventListener('keydown', (e) => {
     if ((gameOver || won) && e.key.toLowerCase() === 'r') {
         resetGame();
@@ -497,14 +508,13 @@ function animate() {
             // Check collision with rocket
             if (checkCollision(rocket, obstacle.mesh)) {
                 if (hasShield) {
-                    // Remove obstacle if shielded
+                    // Remove the obstacle when shield is active
                     scene.remove(obstacle.mesh);
-                    obstacles.splice(obstacleIndex, 1);
-                    createObstacle();
+                    obstacles = obstacles.filter(o => o.mesh !== obstacle.mesh);
                     score += 10 * scoreMultiplier;
                 } else {
                     gameOver = true;
-                    showGameOverMessage();
+                    showGameOver();
                 }
             }
         });
@@ -545,7 +555,7 @@ function animate() {
         // Check if rocket reached the moon
         if (moon.visible && checkCollision(rocket, moon)) {
             won = true;
-            showVictoryMessage();
+            showVictoryEffects();
         }
 
         updateStatusText();

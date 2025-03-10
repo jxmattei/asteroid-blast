@@ -30,25 +30,41 @@
             z-index: 100;
             pointer-events: none;
         }
-        #gameMessage {
+        .messageContainer {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+        .gameMessage {
             font-family: Arial, sans-serif;
             font-size: 48px;
             font-weight: bold;
-            text-align: center;
-            z-index: 1000;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            display: none;
+            margin-bottom: 20px;
             animation: pulse 1s infinite;
         }
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); }
+        #winContainer .gameMessage {
+            color: gold;
+        }
+        #gameOverContainer .gameMessage {
+            color: #ff4444;
+        }
+        .restartButton {
+            background: #44ff44;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            font-size: 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .restartButton:hover {
+            transform: scale(1.1);
         }
         #shootButton {
             position: fixed;
@@ -87,11 +103,23 @@
             -webkit-user-select: none;
             user-select: none;
         }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
     <div id="score">Score: 0</div>
-    <div id="gameMessage">YOU WIN!</div>
+    <div id="winContainer" class="messageContainer">
+        <div class="gameMessage">YOU WIN!</div>
+        <button class="restartButton">Play Again</button>
+    </div>
+    <div id="gameOverContainer" class="messageContainer">
+        <div class="gameMessage">GAME OVER!</div>
+        <button class="restartButton">Try Again</button>
+    </div>
     <div id="shootButton">SHOOT</div>
     <script type="importmap">
         {
