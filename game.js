@@ -23,7 +23,7 @@ let gameTime = 0;
 const moonAppearTime = 30; // Seconds until moon appears
 const scrollSpeed = 0.05;
 const scoreElement = document.getElementById('score');
-const winMessage = document.getElementById('winMessage');
+const gameMessage = document.getElementById('gameMessage');
 const shootButton = document.getElementById('shootButton');
 let obstacles = [];
 const obstacleCount = 10;
@@ -286,28 +286,80 @@ function checkCollision(obj1, obj2) {
 // Update status text
 function updateStatusText() {
     let statusText = `Score: ${score}`;
-    if (hasShield) statusText += ' | Shield Active!';
-    if (hasSpeedBoost) statusText += ' | Speed Boost!';
-    if (scoreMultiplier > 1) statusText += ` | ${scoreMultiplier}x Score!`;
+    if (hasShield) statusText += ' | SHIELD ACTIVE';
+    if (hasSpeedBoost) statusText += ' | SPEED BOOST';
+    if (scoreMultiplier > 1) statusText += ' | 2X SCORE';
     scoreElement.textContent = statusText;
 }
 
-// Victory effects
-function showVictoryEffects() {
-    // Show win message
-    winMessage.style.display = 'block';
-    
-    // Make the moon glow
-    moon.material.emissive.setHex(0xffff00);
-    moon.material.emissiveIntensity = 0.5;
-    
-    // Make the rocket glow
-    rocket.material.emissive.setHex(0xff0000);
-    rocket.material.emissiveIntensity = 0.5;
-    
-    // Add final score to win message
-    winMessage.textContent = `YOU WIN!\nFinal Score: ${score}`;
+// Show game over message
+function showGameOverMessage() {
+    gameMessage.style.display = 'block';
+    gameMessage.style.color = '#ff4444';
+    gameMessage.textContent = `GAME OVER!\nScore: ${score}`;
 }
+
+// Show victory message
+function showVictoryMessage() {
+    gameMessage.style.display = 'block';
+    gameMessage.style.color = '#44ff44';
+    gameMessage.textContent = `YOU WIN!\nScore: ${score}`;
+}
+
+// Reset game state
+function resetGame() {
+    // Reset game state
+    gameOver = false;
+    won = false;
+    score = 0;
+    gameTime = 0;
+    hasShield = false;
+    hasSpeedBoost = false;
+    scoreMultiplier = 1;
+    
+    // Reset rocket
+    rocket.position.set(0, -15, 0);
+    rocket.material.color.setHex(0xff0000);
+    rocket.material.emissiveIntensity = 0;
+    
+    // Reset moon
+    moon.visible = false;
+    moon.position.y = 50;
+    moon.material.emissiveIntensity = 0;
+    
+    // Hide message
+    gameMessage.style.display = 'none';
+    
+    // Clear lasers
+    lasers.forEach(laser => scene.remove(laser.mesh));
+    lasers = [];
+    canShoot = true;
+    shootCooldown = 20;
+    
+    // Clear and recreate obstacles
+    obstacles.forEach(obstacle => scene.remove(obstacle.mesh));
+    obstacles = [];
+    for (let i = 0; i < obstacleCount; i++) {
+        createObstacle();
+    }
+    
+    // Clear and recreate power-ups
+    powerUps.forEach(powerUp => scene.remove(powerUp.mesh));
+    powerUps = [];
+    for (let i = 0; i < 3; i++) {
+        createPowerUp();
+    }
+    
+    updateStatusText();
+    animate();
+}
+
+// Initialize restart on R key
+window.addEventListener('keydown', (e) => {
+    if ((gameOver || won) && e.key.toLowerCase() === 'r') {
+        resetGame();
+    }
+});
 
 // Game loop
 function animate() {
@@ -438,20 +490,21 @@ function animate() {
         }
 
         // Update obstacles
-        obstacles.forEach(obstacle => {
+        obstacles.forEach((obstacle, obstacleIndex) => {
             obstacle.mesh.rotation.x += obstacle.rotSpeed;
             obstacle.mesh.rotation.y += obstacle.rotSpeed;
             
             // Check collision with rocket
             if (checkCollision(rocket, obstacle.mesh)) {
                 if (hasShield) {
-                    // Remove the obstacle when shield is active
+                    // Remove obstacle if shielded
                     scene.remove(obstacle.mesh);
-                    obstacles = obstacles.filter(o => o.mesh !== obstacle.mesh);
+                    obstacles.splice(obstacleIndex, 1);
+                    createObstacle();
                     score += 10 * scoreMultiplier;
                 } else {
                     gameOver = true;
-                    scoreElement.textContent = 'Game Over! Press R to restart';
+                    showGameOverMessage();
                 }
             }
         });
@@ -492,63 +545,13 @@ function animate() {
         // Check if rocket reached the moon
         if (moon.visible && checkCollision(rocket, moon)) {
             won = true;
-            showVictoryEffects();
+            showVictoryMessage();
         }
 
         updateStatusText();
         renderer.render(scene, camera);
     }
 }
-
-// Restart game
-window.addEventListener('keydown', (e) => {
-    if ((gameOver || won) && e.key.toLowerCase() === 'r') {
-        // Reset game state
-        gameOver = false;
-        won = false;
-        score = 0;
-        gameTime = 0;
-        hasShield = false;
-        hasSpeedBoost = false;
-        scoreMultiplier = 1;
-        
-        // Reset rocket
-        rocket.position.set(0, -15, 0);
-        rocket.material.color.setHex(0xff0000);
-        rocket.material.emissiveIntensity = 0;
-        
-        // Reset moon
-        moon.visible = false;
-        moon.position.y = 50;
-        moon.material.emissiveIntensity = 0;
-        
-        // Hide win message
-        winMessage.style.display = 'none';
-        
-        // Clear lasers
-        lasers.forEach(laser => scene.remove(laser.mesh));
-        lasers = [];
-        canShoot = true;
-        shootCooldown = 20;
-        
-        // Clear and recreate obstacles
-        obstacles.forEach(obstacle => scene.remove(obstacle.mesh));
-        obstacles = [];
-        for (let i = 0; i < obstacleCount; i++) {
-            createObstacle();
-        }
-        
-        // Clear and recreate power-ups
-        powerUps.forEach(powerUp => scene.remove(powerUp.mesh));
-        powerUps = [];
-        for (let i = 0; i < 3; i++) {
-            createPowerUp();
-        }
-        
-        updateStatusText();
-        animate();
-    }
-});
 
 // Handle window resizing
 window.addEventListener('resize', () => {
