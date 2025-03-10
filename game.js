@@ -298,8 +298,19 @@ initTouchControls();
 
 // Collision detection
 function checkCollision(obj1, obj2) {
-    const distance = obj1.position.distanceTo(obj2.position);
-    return distance < 2;
+    const box1 = new THREE.Box3().setFromObject(obj1);
+    const box2 = new THREE.Box3().setFromObject(obj2);
+    
+    // Adjust collision box for spaceship sprite
+    if (obj1 === rocket) {
+        // Make collision box slightly smaller than visual size for better gameplay
+        box1.min.x += 0.5;
+        box1.max.x -= 0.5;
+        box1.min.y += 0.5;
+        box1.max.y -= 0.5;
+    }
+    
+    return box1.intersectsBox(box2);
 }
 
 // Update status text
