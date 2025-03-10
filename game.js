@@ -297,6 +297,7 @@ function updateStatusText() {
 function showVictoryEffects() {
     // Show win container
     winContainer.style.display = 'block';
+    winContainer.querySelector('.gameMessage').textContent = `YOU WIN!\nScore: ${score}`;
     
     // Make the moon glow
     moon.material.emissive.setHex(0xffff00);
@@ -310,6 +311,7 @@ function showVictoryEffects() {
 // Show game over screen
 function showGameOver() {
     gameOverContainer.style.display = 'block';
+    gameOverContainer.querySelector('.gameMessage').textContent = `GAME OVER!\nScore: ${score}`;
 }
 
 // Reset game state
