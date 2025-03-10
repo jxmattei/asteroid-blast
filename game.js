@@ -366,6 +366,10 @@ function resetGame() {
 // Initialize restart buttons and R key
 document.querySelectorAll('.restartButton').forEach(button => {
     button.addEventListener('click', resetGame);
+    button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        resetGame();
+    }, { passive: false });
 });
 
 window.addEventListener('keydown', (e) => {
